@@ -38,7 +38,3 @@ class LoginView(ObtainAuthToken):
             'password': user.password
         })
         
-def register_view(request):
-    if request.method == 'POST':
-        print(username)
-       return request
