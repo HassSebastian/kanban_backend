@@ -1,4 +1,6 @@
-from django.shortcuts import render
+import json
+from django import forms
+from django.shortcuts import render, redirect
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
@@ -7,11 +9,14 @@ from kanban_backend.serializers import TaskItemSerialisierer
 from tasklist.models import TaskItem
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth.models import User
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+
 # Create your views here.
 
 class TaskItemView(APIView):
     authentication_classes = [TokenAuthentication]
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
         tasks = TaskItem.objects.all()
@@ -32,3 +37,8 @@ class LoginView(ObtainAuthToken):
             'username': user.username,
             'password': user.password
         })
+        
+def register_view(request):
+    if request.method == 'POST':
+        print(username)
+       return request
