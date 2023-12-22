@@ -8,7 +8,7 @@ from datetime import date
 
 class TaskItem(models.Model):
     title = models.CharField(max_length=100)
-    description = models.CharField(max_length=200)
+    description = models.CharField(max_length=200, blank=True, null=True)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
