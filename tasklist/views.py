@@ -14,8 +14,6 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from rest_framework import status
 
 
-
-
 class LoginView(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(
@@ -32,8 +30,8 @@ class LoginView(ObtainAuthToken):
                 "password": user.password,
             }
         )
-        
-        
+
+
 class TaskItemView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -43,14 +41,29 @@ class TaskItemView(APIView):
         serializer = TaskItemSerialisierer(tasks, many=True)
         return Response(serializer.data)
 
+    def post(self, request, format=None):
+        task = request.data.copy()
+        task[
+            "author"
+        ] = (
+            request.user.id
+        )  # Oder verwende request.user direkt, je nachdem, wie dein Frontend die Daten sendet
+        serializer = TaskItemSerialisierer(data=task)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TaskItemDetailView(APIView):
     def get_object_or_404(self, pk):
         return TaskItem.objects.get(pk=pk)
-    
 
     def delete(self, request, pk, format=None):
         task = self.get_object_or_404(pk)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+def get_all_users(request):
+    users = User.objects.all().values()
+    return JsonResponse(list(users),safe=False)
