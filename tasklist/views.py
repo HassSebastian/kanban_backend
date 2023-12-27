@@ -32,6 +32,10 @@ class LoginView(ObtainAuthToken):
         )
 
 
+class RegisterView:
+    ...
+
+
 class TaskItemView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
@@ -43,11 +47,7 @@ class TaskItemView(APIView):
 
     def post(self, request, format=None):
         task = request.data.copy()
-        task[
-            "author"
-        ] = (
-            request.user.id
-        )  # Oder verwende request.user direkt, je nachdem, wie dein Frontend die Daten sendet
+        task["author"] = request.user.id
         serializer = TaskItemSerialisierer(data=task)
         if serializer.is_valid():
             serializer.save()
@@ -61,9 +61,23 @@ class TaskItemDetailView(APIView):
 
     def delete(self, request, pk, format=None):
         task = self.get_object_or_404(pk)
+        print(task)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+    def put(self, request, pk, format=None):
+        update_task = request.data.copy()
+        task = self.get_object_or_404(pk)
+        print(f"update: {update_task} task: {task}")
+
+        task["author"] = request.user.id
+        serializer = TaskItemSerialisierer(data=task)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 def get_all_users(request):
     users = User.objects.all().values()
-    return JsonResponse(list(users),safe=False)
+    return JsonResponse(list(users), safe=False)
