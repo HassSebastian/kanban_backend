@@ -68,10 +68,8 @@ class TaskItemDetailView(APIView):
     def put(self, request, pk, format=None):
         update_task = request.data.copy()
         task = self.get_object_or_404(pk)
-        print(f"update: {update_task} task: {task}")
-
-        task["author"] = request.user.id
-        serializer = TaskItemSerialisierer(data=task)
+        task.author = request.user.id
+        serializer = TaskItemSerialisierer(task, data=update_task)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
