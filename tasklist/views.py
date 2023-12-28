@@ -76,6 +76,6 @@ class TaskItemDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def get_all_users(request):
-    users = User.objects.all().values()
-    return JsonResponse(list(users), safe=False)
+def get_all_members(request):
+    members = User.objects.all().values()
+    return JsonResponse(list(members), safe=False)
