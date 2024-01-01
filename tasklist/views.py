@@ -5,13 +5,14 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from kanban_backend.serializers import TaskItemSerialisierer
-from tasklist.models import TaskItem
+from kanban_backend.serializers import RegistListSerializer, TaskItemSerialisierer
+from tasklist.models import Regist, TaskItem
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from rest_framework import status
+from rest_framework import status, generics
+from django.contrib.auth.forms import UserCreationForm
 
 
 class LoginView(ObtainAuthToken):
@@ -32,8 +33,18 @@ class LoginView(ObtainAuthToken):
         )
 
 
-class RegisterView:
-    ...
+class RegistView(APIView):
+    def post(self, request, format=None):
+        serializer = RegistListSerializer(data=request.data)
+        if serializer.is_valid():
+            if Regist.objects.filter(email=request.data["email"]).exists():
+                return Response(
+                    {"error": "Diese E-Mail-Adresse existiert bereits"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class TaskItemView(APIView):
@@ -76,6 +87,21 @@ class TaskItemDetailView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-def get_all_members(request):
-    members = User.objects.all().values()
-    return JsonResponse(list(members), safe=False)
+# def get_all_members(request):
+#     members = User.objects.all()
+#     print("members = ",members)
+#     return JsonResponse(list(members), safe=False)
+
+
+# def get_all_members(request):
+#     members = User.objects.all()
+#     serialized_members = [{'username': member.username, 'email': member.email} for member in members]
+#     return JsonResponse(serialized_members, safe=False)
+
+
+# def get_all_members(request):
+#     all_members = Member.objects.all()
+#     serializer = MembersSerialisierer(all_members)
+#     # all_members ist jetzt ein Queryset mit allen Mitgliedern
+#     # return render(request, 'members/all_members.html', {'members': all_members})
+#     return JsonResponse(serializer.data)
