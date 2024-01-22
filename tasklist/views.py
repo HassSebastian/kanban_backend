@@ -1,5 +1,3 @@
-# from django.shortcuts import render, redirect
-from django.http import JsonResponse
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
@@ -14,7 +12,29 @@ from rest_framework.decorators import api_view
 
 
 class LoginView(ObtainAuthToken):
+    """
+    A class-based view for handling user login and obtaining authentication tokens.
+
+    Methods:
+    - `post(self, request, *args, **kwargs)`: Handles HTTP POST request for user login.
+
+    Attributes:
+    - None
+    """
+    
+
     def post(self, request, *args, **kwargs):
+        """
+        Handles HTTP POST request for user login and obtaining authentication tokens.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            Response: A Response object with authentication token and user information.
+        """
         serializer = self.serializer_class(
             data=request.data, context={"request": request}
         )
@@ -25,14 +45,31 @@ class LoginView(ObtainAuthToken):
             {
                 "token": token.key,
                 "user_id": user.pk,
-                # "username": user.username,
-                # "password": user.password,
             }
         )
 
 
 class RegistView(APIView):
+    """
+    A class-based view for handling user registration.
+
+    Methods:
+    - `post(self, request, format=None)`: Handles HTTP POST request for user registration.
+
+    Attributes:
+    - None
+    """
     def post(self, request, format=None):
+        """
+        Handles HTTP POST request for user registration.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            format (str, optional): The requested format for the response. Defaults to None.
+
+        Returns:
+            Response: A Response object with a success message or error message.
+        """
         first_name = request.data.get("first_name")
         last_name = request.data.get("last_name")
         email = request.data.get("email")
@@ -56,15 +93,44 @@ class RegistView(APIView):
 
 
 class TaskItemView(APIView):
+    """
+    A class-based view for handling operations on a collection of TaskItems.
+
+    Attributes:
+    - `authentication_classes` (list): List of authentication classes applied to the view.
+    - `permission_classes` (list): List of permission classes applied to the view.
+    """
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
 
+
     def get(self, request, format=None):
+        """
+        Handles HTTP GET request to retrieve a list of TaskItems.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            format (str, optional): The requested format for the response. Defaults to None.
+
+        Returns:
+            Response: A Response object with serialized TaskItem data.
+        """
         tasks = TaskItem.objects.all()
         serializer = TaskItemSerialisierer(tasks, many=True)
         return Response(serializer.data)
 
+
     def post(self, request, format=None):
+        """
+        Handles HTTP POST request to create a new TaskItem.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            format (str, optional): The requested format for the response. Defaults to None.
+
+        Returns:
+            Response: A Response object with the created TaskItem data or error messages.
+        """
         task = request.data.copy()
         task["author"] = request.user.id
         serializer = TaskItemSerialisierer(data=task)
@@ -75,16 +141,59 @@ class TaskItemView(APIView):
 
 
 class TaskItemDetailView(APIView):
+    """
+    A class-based view for handling detailed operations on a TaskItem.
+
+    Methods:
+    - `get_object_or_404(self, pk)`: Retrieves a TaskItem instance by its primary key or raises a 404 error.
+
+    - `delete(self, request, pk, format=None)`: Handles HTTP DELETE request to delete a TaskItem instance.
+
+    - `put(self, request, pk, format=None)`: Handles HTTP PUT request to update a TaskItem instance.
+    """
     def get_object_or_404(self, pk):
+        """
+        Retrieves a TaskItem instance by its primary key or raises a 404 error.
+
+        Args:
+            pk (int): The primary key of the TaskItem.
+
+        Returns:
+            TaskItem: The TaskItem instance.
+        """
         return TaskItem.objects.get(pk=pk)
+    
 
     def delete(self, request, pk, format=None):
+        """
+        Handles HTTP DELETE request to delete a TaskItem instance.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            pk (int): The primary key of the TaskItem to be deleted.
+            format (str, optional): The requested format for the response. Defaults to None.
+
+        Returns:
+            Response: A Response object with status HTTP_204_NO_CONTENT.
+        """
         task = self.get_object_or_404(pk)
         print(task)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
     def put(self, request, pk, format=None):
+        """
+        <Handles HTTP<<<< PUT request to update a TaskItem instance.
+
+        Args:
+            request (HttpRequest): The HTTP request object.
+            pk (int): The primary key of the TaskItem to be updated.
+            format (str, optional): The requested format for the response. Defaults to None.
+
+        Returns:
+            Response: A Response object with the updated TaskItem data or error messages.
+        """
         update_task = request.data.copy()
         task = self.get_object_or_404(pk)
         task.author = request.user.id
@@ -93,64 +202,3 @@ class TaskItemDetailView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-def get_all_members(request):
-    members = User.objects.all()
-    serialized_members = [
-        {
-            "user_id": member.id,
-            "username": member.username,
-            "email": member.email,
-            "first_name": member.first_name,
-            "last_name": member.last_name,
-            "checked": False,
-            "color": get_member_color(member),
-            "initials": get_member_initials(member),
-        }
-        for member in members
-    ]
-    return JsonResponse(serialized_members, safe=False)
-
-
-def get_member_color(member):
-    if exist_first_and_last_name(member):
-        ascii_first_letter = ord(member.first_name[0])
-        ascii_second_letter = ord(member.last_name[0])
-        sum = ascii_first_letter + ascii_second_letter
-        color_index = sum % 7
-        return color_index
-    elif exist_username(member):
-        ascii_username_first_letter = ord(member.username[0])
-        ascii_username_second_letter = ord(member.username[1])
-        sum = ascii_username_first_letter + ascii_username_second_letter
-        color_index = sum % 7
-        return color_index
-    else:
-        return ""
-
-
-def get_member_initials(member):
-    if exist_first_and_last_name(member):
-        return member.first_name[0] + member.last_name[0].upper()
-    elif exist_username(member):
-        return member.username[:2].upper()
-    else:
-        return ""
-
-
-def exist_first_and_last_name(member):
-    return bool(member.first_name and member.last_name)
-
-
-def exist_username(member):
-    return bool(member.username)
-
-
-# def get_all_members(request):
-#     all_members = Member.objects.all()
-#     serializer = MembersSerialisierer(all_members)
-#     # all_members ist jetzt ein Queryset mit allen Mitgliedern
-#     # return render(request, 'members/all_members.html', {'members': all_members})
-#     return JsonResponse(serializer.data)
-
