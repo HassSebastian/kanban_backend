@@ -1,10 +1,9 @@
-from audioop import reverse
+from django.urls import reverse
 from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import User
-
 from tasklist.models import TaskItem
 
 
@@ -45,4 +44,3 @@ class TaskItemViewTest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    # Add more test cases as needed
