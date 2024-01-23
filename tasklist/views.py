@@ -21,7 +21,6 @@ class LoginView(ObtainAuthToken):
     Attributes:
     - None
     """
-    
 
     def post(self, request, *args, **kwargs):
         """
@@ -59,34 +58,35 @@ class RegistView(APIView):
     Attributes:
     - None
     """
+
     def post(self, request, format=None):
         """
-        Handles HTTP POST request for user registration.
+        Handles the HTTP POST request for user registration.
 
-        Args:
-            request (HttpRequest): The HTTP request object.
-            format (str, optional): The requested format for the response. Defaults to None.
+        Parameters:
+        - request (rest_framework.request.Request): The HTTP request object.
+        - format (str, optional): The requested format for the response. Defaults to None.
 
         Returns:
-            Response: A Response object with a success message or error message.
+        - rest_framework.response.Response: HTTP response indicating the result of user registration.
         """
-        first_name = request.data.get("first_name")
-        last_name = request.data.get("last_name")
-        email = request.data.get("email")
-        username = request.data.get("username")
-        if User.objects.filter(email=email).exists():
+        data = request.data
+        username = data.get("username")
+        email = data.get("email")
+
+        if User.objects.filter(username=username).exists():
             return Response(
                 {"error": "This username is already taken"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        user = User.objects.create_user(
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            username=username,
-        )
-        user.set_password(request.data.get("password"))
-        user.save()
+
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {"error": "This email is already taken"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.create_user(**data)
         return Response(
             {"message": "User registered successfully"}, status=status.HTTP_201_CREATED
         )
@@ -100,9 +100,9 @@ class TaskItemView(APIView):
     - `authentication_classes` (list): List of authentication classes applied to the view.
     - `permission_classes` (list): List of permission classes applied to the view.
     """
+
     authentication_classes = [TokenAuthentication]
     permission_classes = [IsAuthenticated]
-
 
     def get(self, request, format=None):
         """
@@ -118,7 +118,6 @@ class TaskItemView(APIView):
         tasks = TaskItem.objects.all()
         serializer = TaskItemSerialisierer(tasks, many=True)
         return Response(serializer.data)
-
 
     def post(self, request, format=None):
         """
@@ -151,6 +150,7 @@ class TaskItemDetailView(APIView):
 
     - `put(self, request, pk, format=None)`: Handles HTTP PUT request to update a TaskItem instance.
     """
+
     def get_object_or_404(self, pk):
         """
         Retrieves a TaskItem instance by its primary key or raises a 404 error.
@@ -162,7 +162,6 @@ class TaskItemDetailView(APIView):
             TaskItem: The TaskItem instance.
         """
         return TaskItem.objects.get(pk=pk)
-    
 
     def delete(self, request, pk, format=None):
         """
@@ -180,7 +179,6 @@ class TaskItemDetailView(APIView):
         print(task)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-
 
     def put(self, request, pk, format=None):
         """
